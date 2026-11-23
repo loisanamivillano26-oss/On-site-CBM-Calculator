@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CBM Survey Calculator</title>
+<style>
+:root{color-scheme:light;--bg:#fff;--surface:#fff;--ink:#2a1214;--muted:#7a5f62;--line:#efd2d4;--accent:#d62027;--accent-ink:#fff;--danger:#d62027;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;padding:16px 12px 130px}
+main{max-width:860px;margin:0 auto}
+h1{font-size:1.4rem;margin:0 0 4px}
+h2{font-size:1.05rem;margin:18px 0 8px}
+.sub{color:var(--muted);margin:0 0 12px;font-size:.9rem}
+input,textarea{width:100%;font:inherit;font-size:1rem;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);min-width:0}
+textarea{min-height:90px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.cl{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.cl .full{grid-column:1/-1}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px 12px;margin-top:12px}
+.row{display:grid;grid-template-columns:26px 1fr 36px;gap:6px 8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.n{color:var(--muted);font-size:.85rem;text-align:right}
+.nums,.ph{grid-column:2/4;display:grid;grid-template-columns:repeat(3,1fr) 64px 84px;gap:6px;align-items:center}
+.nums input{padding:9px 6px;text-align:center}
+.ph{font-size:.7rem;color:var(--muted);text-align:center}
+.ph span:last-child,.v{text-align:right}
+.v{font-weight:700;color:var(--accent)}
+.unit{grid-column:2/4;font-size:.78rem;color:var(--muted);text-align:right}
+.nt{grid-column:2/4;font-size:.9rem;padding:7px 9px}
+.x{border:0;background:transparent;color:var(--danger);font-size:1.3rem;cursor:pointer;height:36px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar>div{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tot{font-size:.85rem;color:var(--muted)}
+.tot b{display:block;font-size:1.7rem;color:var(--ink)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:600;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.btn.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.msg{font-size:.85rem;color:var(--muted);margin-top:8px;min-height:1em}
+#summary{display:none}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem;background:var(--surface)}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{font-size:.75rem;color:var(--muted)}
+td.r,th.r{text-align:right;white-space:nowrap}
+tfoot td{font-weight:700;border-bottom:0;font-size:1rem}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.meta div span{display:block;font-size:.75rem;color:var(--muted)}
+.meta div b{font-size:1rem}
+.pn{display:none;white-space:pre-wrap;border:1px solid var(--line);border-radius:7px;padding:9px;min-height:40px}
+@media print{
+  body{background:#fff;color:#000;padding:0}
+  .bar,#survey,.noprint,.msg,.sub{display:none!important}
+  #summary{display:block!important}
+  .card,table{border-color:#999;background:#fff;color:#000}
+  th,td{border-color:#999;color:#000}
+  #onotes{display:none}.pn{display:block;border-color:#999}
+  .scroll{overflow:visible}
+}
+</style>
+</head>
+<body>
+<main>
+<section id="survey">
+  <h1>CBM Survey Calculator</h1>
+  <p class="sub">Type a description and sizes in cm. A new line appears automatically. Press Enter to jump to the next field. Your work is saved on this device.</p>
+  <div class="card cl">
+    <div class="full"><label for="cname">Client name</label><input id="cname" type="text" autocomplete="off"></div>
+    <div><label for="cphone">Phone number</label><input id="cphone" type="tel" inputmode="tel" autocomplete="off"></div>
+    <div><label for="cdate">Date of survey</label><input id="cdate" type="date"></div>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="msg" id="msg"></div>
+</section>
+
+<section id="summary">
+  <h1>Survey summary</h1>
+  <div class="card meta" id="meta"></div>
+  <h2>Items</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>#</th><th>Description</th><th class="r">L × W × H (cm)</th><th class="r">Qty</th><th class="r">Per unit m³</th><th class="r">Total m³</th><th>Notes</th></tr></thead>
+    <tbody id="tbody"></tbody>
+    <tfoot><tr><td colspan="5">Total volume</td><td class="r" id="sumtotal">0.000</td><td></td></tr></tfoot>
+  </table></div>
+  <h2>Overall notes</h2>
+  <textarea id="onotes" placeholder="Access, parking, fragile items, special requests, anything else"></textarea>
+  <div class="pn" id="onotesPrint"></div>
+  <div class="btns noprint" style="margin-top:14px">
+    <button class="btn p" id="print" type="button">Print</button>
+    <button class="btn" id="pdf" type="button">Download PDF</button>
+    <button class="btn" id="csv" type="button">Download CSV</button>
+    <button class="btn" id="copy" type="button">Copy text</button>
+    <button class="btn" id="back" type="button">Back to edit</button>
+  </div>
+  <div class="msg" id="msg2"></div>
+</section>
+</main>
+
+<div class="bar" id="bar"><div>
+  <div class="tot"><span id="count">0 items</span><b><span id="total">0.000</span> m³</b></div>
+  <div class="btns"><button class="btn" id="new" type="button">New survey</button><button class="btn p" id="submit" type="button">Submit survey</button></div>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+  var KEY='cbm-survey-v2';
+  var list=document.getElementById('list'),msg=document.getElementById('msg'),msg2=document.getElementById('msg2');
+  var cname=document.getElementById('cname'),cphone=document.getElementById('cphone'),cdate=document.getElementById('cdate'),onotes=document.getElementById('onotes');
+  function num(v){var n=parseFloat(v);return isFinite(n)&&n>0?n:0;}
+  function fmt(n){return n.toFixed(3);}
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function prettyDate(s){if(!s)return '';var p=s.split('-');if(p.length!==3)return s;return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+  function qty(d){var q=parseInt(d.q,10);return q>0?q:1;}
+  function unitVol(d){return num(d.l)*num(d.w)*num(d.h)/1000000;}
+  function vol(d){return unitVol(d)*qty(d);}
+  function rowHas(d){return d.desc||d.l||d.w||d.h||d.nt;}
+
+  function addRow(d){
+    d=d||{};
+    var r=document.createElement('div');r.className='row';
+    r.innerHTML='<span class="n"></span><input class="desc" type="text" placeholder="Item description" aria-label="Item description">'+
+    '<button class="x" type="button" aria-label="Remove item">&times;</button>'+
+    '<div class="ph"><span>Length cm</span><span>Width cm</span><span>Height cm</span><span>Qty</span><span>Total m³</span></div>'+
+    '<div class="nums"><input class="l" type="number" inputmode="decimal" min="0" step="any" aria-label="Length cm">'+
+    '<input class="w" type="number" inputmode="decimal" min="0" step="any" aria-label="Width cm">'+
+    '<input class="h" type="number" inputmode="decimal" min="0" step="any" aria-label="Height cm">'+
+    '<input class="q" type="number" inputmode="numeric" min="1" step="1" aria-label="Quantity">'+
+    '<span class="v">0.000</span></div>'+
+    '<div class="unit">Per unit: <span class="u">0.000</span> m³ × quantity</div>'+
+    '<input class="nt" type="text" placeholder="Item notes (optional)" aria-label="Item notes">';
+    r.querySelector('.desc').value=d.desc||'';
+    r.querySelector('.l').value=d.l||'';r.querySelector('.w').value=d.w||'';r.querySelector('.h').value=d.h||'';
+    r.querySelector('.q').value=d.q||1;r.querySelector('.nt').value=d.nt||'';
+    list.appendChild(r);
+    r.addEventListener('input',function(){
+      if(r===list.lastElementChild&&rowHas(rowData(r)))addRow();
+      update();
+    });
+    r.addEventListener('keydown',function(e){
+      if(e.key!=='Enter')return;
+      e.preventDefault();
+      var f=Array.prototype.slice.call(r.querySelectorAll('.desc,.l,.w,.h,.q,.nt'));
+      var i=f.indexOf(e.target);
+      if(i<f.length-1){f[i+1].focus();}
+      else{var nx=r.nextElementSibling;if(!nx)nx=addRow();nx.querySelector('.desc').focus();}
+    });
+    r.querySelector('.x').addEventListener('click',function(){
+      r.remove();if(!list.children.length)addRow();
+      if(rowHas(rowData(list.lastElementChild)))addRow();
+      update();
+    });
+    return r;
+  }
+  function rowData(r){return{desc:r.querySelector('.desc').value.trim(),l:r.querySelector('.l').value,w:r.querySelector('.w').value,h:r.querySelector('.h').value,q:r.querySelector('.q').value,nt:r.querySelector('.nt').value.trim()};}
+  function items(){return Array.prototype.map.call(list.children,rowData).filter(rowHas);}
+  function totalOf(a){return a.reduce(function(s,d){return s+vol(d);},0);}
+
+  function update(){
+    Array.prototype.forEach.call(list.children,function(r,i){
+      var d=rowData(r);
+      r.querySelector('.n').textContent=i+1;
+      r.querySelector('.v').textContent=fmt(vol(d));
+      r.querySelector('.u').textContent=fmt(unitVol(d));
+    });
+    var a=items(),n=a.filter(function(d){return vol(d)>0;}).length;
+    document.getElementById('total').textContent=fmt(totalOf(a));
+    document.getElementById('count').textContent=n+(n===1?' item':' items');
+    save();
+  }
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify({name:cname.value,phone:cphone.value,date:cdate.value,notes:onotes.value,rows:items()}));}catch(e){}
+  }
+  [cname,cphone,cdate,onotes].forEach(function(el){el.addEventListener('input',save);});
+
+  /* summary */
+  function showSummary(){
+    var a=items().filter(function(d){return vol(d)>0||d.desc;});
+    if(!a.length){msg.textContent='Add at least one item before submitting.';return;}
+    msg.textContent='';
+    var meta=document.getElementById('meta');meta.innerHTML='';
+    [['Client',cname.value||'—'],['Phone',cphone.value||'—'],['Survey date',prettyDate(cdate.value)||'—'],['Total volume',fmt(totalOf(a))+' m³']].forEach(function(p){
+      var d=document.createElement('div'),s=document.createElement('span'),b=document.createElement('b');
+      s.textContent=p[0];b.textContent=p[1];d.appendChild(s);d.appendChild(b);meta.appendChild(d);
+    });
+    var tb=document.getElementById('tbody');tb.innerHTML='';
+    a.forEach(function(d,i){
+      var tr=document.createElement('tr');
+      [[i+1,''],[d.desc||'Item',''],[(d.l||0)+' × '+(d.w||0)+' × '+(d.h||0),'r'],[qty(d),'r'],[fmt(unitVol(d)),'r'],[fmt(vol(d)),'r'],[d.nt,'']].forEach(function(c){
+        var td=document.createElement('td');if(c[1])td.className=c[1];td.textContent=c[0];tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    document.getElementById('sumtotal').textContent=fmt(totalOf(a));
+    document.getElementById('onotesPrint').textContent=onotes.value;
+    document.getElementById('survey').style.display='none';
+    document.getElementById('bar').style.display='none';
+    document.getElementById('summary').style.display='block';
+    window.scrollTo(0,0);
+  }
+  function showSurvey(){
+    document.getElementById('summary').style.display='none';
+    document.getElementById('survey').style.display='block';
+    document.getElementById('bar').style.display='block';
+    msg2.textContent='';
+  }
+  onotes.addEventListener('input',function(){document.getElementById('onotesPrint').textContent=onotes.value;});
+  document.getElementById('submit').addEventListener('click',showSummary);
+  document.getElementById('back').addEventListener('click',showSurvey);
+
+  function slug(){var s=(cname.value||'survey').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return 'cbm-'+(s||'survey')+'-'+(cdate.value||today());}
+  function summaryItems(){return items().filter(function(d){return vol(d)>0||d.desc;});}
+  async function saveFile(name,data){
+    try{
+      var dl=await claude.use('downloads');
+      if(!dl){msg2.textContent='Downloads are not available in this view. Use Print and choose Save as PDF, or Copy text.';return;}
+      await dl.save({filename:name,data:data});
+      msg2.textContent='File ready: '+name;
+    }catch(e){
+      msg2.textContent=(e&&e.code==='declined')?'Download cancelled.':'Could not download here. Use Print and choose Save as PDF, or Copy text.';
+    }
+  }
+  document.getElementById('csv').addEventListener('click',function(){
+    function q(v){v=String(v==null?'':v);return '"'+v.replace(/"/g,'""')+'"';}
+    var a=summaryItems(),L=[];
+    L.push(['Client',cname.value].map(q).join(','));L.push(['Phone',cphone.value].map(q).join(','));L.push(['Survey date',prettyDate(cdate.value)].map(q).join(','));L.push('');
+    L.push(['#','Description','Length cm','Width cm','Height cm','Qty','Per unit m3','Total m3','Notes'].map(q).join(','));
+    a.forEach(function(d,i){L.push([i+1,d.desc,d.l,d.w,d.h,qty(d),fmt(unitVol(d)),fmt(vol(d)),d.nt].map(q).join(','));});
+    L.push('');L.push(['','TOTAL','','','','','',fmt(totalOf(a)),''].map(q).join(','));
+    L.push(['Overall notes',onotes.value].map(q).join(','));
+    saveFile(slug()+'.csv',L.join('\r\n'));
+  });
+  document.getElementById('pdf').addEventListener('click',function(){
+    if(!(window.jspdf&&window.jspdf.jsPDF)){msg2.textContent='PDF tool did not load. Use Print and choose Save as PDF.';return;}
+    var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),a=summaryItems();
+    doc.setFontSize(16);doc.text('CBM Survey Summary',14,16);
+    doc.setFontSize(10);
+    doc.text('Client: '+(cname.value||'-'),14,24);doc.text('Phone: '+(cphone.value||'-'),14,29.5);doc.text('Survey date: '+(prettyDate(cdate.value)||'-'),14,35);
+    var body=a.map(function(d,i){return [i+1,d.desc||'Item',(d.l||0)+' x '+(d.w||0)+' x '+(d.h||0),qty(d),fmt(unitVol(d)),fmt(vol(d)),d.nt];});
+    body.push([{content:'TOTAL VOLUME (m3)',colSpan:5,styles:{halign:'right',fontStyle:'bold'}},{content:fmt(totalOf(a)),styles:{fontStyle:'bold',halign:'right'}},'']);
+    doc.autoTable({startY:40,head:[['#','Description','L x W x H (cm)','Qty','Per unit m3','Total m3','Notes']],body:body,styles:{fontSize:9},headStyles:{fillColor:[214,32,39]},columnStyles:{3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}});
+    var y=doc.lastAutoTable.finalY+10;
+    doc.setFontSize(11);if(y>270){doc.addPage();y=16;}
+    doc.text('Overall notes',14,y);doc.setFontSize(10);
+    var lines=doc.splitTextToSize(onotes.value||'-',180);
+    lines.forEach(function(t){y+=5.5;if(y>285){doc.addPage();y=16;}doc.text(t,14,y);});
+    saveFile(slug()+'.pdf',doc.output('arraybuffer'));
+  });
+  document.getElementById('print').addEventListener('click',function(){
+    try{window.print();}catch(e){msg2.textContent='Printing is blocked here. Download the PDF and print it.';}
+  });
+  document.getElementById('copy').addEventListener('click',function(){
+    var a=summaryItems(),t=[];
+    t.push('Client: '+(cname.value||'-'));t.push('Phone: '+(cphone.value||'-'));t.push('Survey date: '+(prettyDate(cdate.value)||'-'));t.push('');
+    a.forEach(function(d,i){t.push((i+1)+'. '+(d.desc||'Item')+' | '+(d.l||0)+'x'+(d.w||0)+'x'+(d.h||0)+' cm | qty '+qty(d)+' | '+fmt(vol(d))+' m3'+(d.nt?' | '+d.nt:''));});
+    t.push('');t.push('TOTAL: '+fmt(totalOf(a))+' m3');if(onotes.value){t.push('');t.push('Notes: '+onotes.value);}
+    function ok(){msg2.textContent='Copied.';}function fail(){msg2.textContent='Copy was blocked. Use Download CSV instead.';}
+    try{navigator.clipboard.writeText(t.join('\n')).then(ok,fail);}catch(e){fail();}
+  });
+  document.getElementById('new').addEventListener('click',function(){
+    if(!confirm('Clear this survey and start a new one?'))return;
+    list.innerHTML='';cname.value='';cphone.value='';onotes.value='';cdate.value=today();addRow();update();msg.textContent='';
+  });
+
+  var saved=null;try{saved=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  cdate.value=today();
+  if(saved){cname.value=saved.name||'';cphone.value=saved.phone||'';if(saved.date)cdate.value=saved.date;onotes.value=saved.notes||'';(saved.rows||[]).forEach(addRow);}
+  addRow();update();
+})();
+</script>
+</body>
+</html>
